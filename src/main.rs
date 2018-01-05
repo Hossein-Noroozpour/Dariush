@@ -1,7 +1,9 @@
 extern crate winapi;
 
-mod window;
+pub mod application;
+pub mod window;
 
 fn main() {
-    println!("Hello, world!");
+    let mut app = application::Application::new();
+    app.run();
 }
