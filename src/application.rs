@@ -1,21 +1,38 @@
 use super::window::Window;
+use super::events::Event;
 use std::mem::zeroed;
+use std::process::exit;
+use std::sync::Mutex;
 
 pub struct Application {
-    pub is_running: bool,
     pub window: Window,
+    event_handler_locker: Mutex<()>,
 }
 
 impl Application {
     pub fn new() -> Self {
-        let mut app: Application = unsafe { zeroed() };
-        app.is_running = true;
+        let mut app = Application {
+            window: unsafe { zeroed() },
+            event_handler_locker: Mutex::new(()),
+        };
+        Window::new(&mut app);
         app
     }
 
     pub fn run(&mut self) {
-        Window::new(self);
+        self.window.main_loop();
     }
 
-    pub fn handle(&mut self) {}
+    pub fn handle(&mut self, e: Event) {
+        match e {
+            Event::Quit => exit(0),
+            _ => {}
+        }
+        let _guard = self.event_handler_locker.lock().unwrap();
+        match e {
+            _ => {
+                eprintln!("Unhandled app event.");
+            }
+        }
+    }
 }

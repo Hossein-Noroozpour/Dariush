@@ -1,13 +1,13 @@
 use winapi::shared::minwindef::{HINSTANCE, LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::windef::{HBRUSH, HWND};
 use winapi::um::winuser::{ChangeDisplaySettingsW, CreateWindowExW, DefWindowProcW, DestroyWindow,
-                          DispatchMessageW, GetMessageW, GetSystemMetrics, GetWindowLongPtrW,
+                          DispatchMessageW, GetSystemMetrics, GetWindowLongPtrW, PeekMessageW,
                           PostQuitMessage, RegisterClassExW, SetFocus, SetForegroundWindow,
                           SetWindowLongPtrW, ShowWindow, TranslateMessage, UpdateWindow,
                           CDS_FULLSCREEN, CREATESTRUCTW, CS_HREDRAW, CS_OWNDC, CS_VREDRAW,
-                          GWLP_USERDATA, MSG, SM_CXSCREEN, SM_CYSCREEN, SW_SHOW, VK_ESCAPE,
-                          WM_CREATE, WM_KEYDOWN, WNDCLASSEXW, WS_CLIPCHILDREN, WS_CLIPSIBLINGS,
-                          WS_EX_APPWINDOW, WS_POPUP};
+                          GWLP_USERDATA, MSG, PM_REMOVE, SM_CXSCREEN, SM_CYSCREEN, SW_SHOW,
+                          VK_ESCAPE, WM_CREATE, WM_KEYDOWN, WM_QUIT, WM_SHOWWINDOW, WNDCLASSEXW,
+                          WS_CLIPCHILDREN, WS_CLIPSIBLINGS, WS_EX_APPWINDOW, WS_POPUP};
 use winapi::um::wingdi::{GetStockObject, BLACK_BRUSH, DEVMODEW, DM_BITSPERPEL, DM_PELSHEIGHT,
                          DM_PELSWIDTH};
 use winapi::um::libloaderapi::GetModuleHandleW;
@@ -16,6 +16,8 @@ use std::ptr::{null, null_mut};
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use super::application::Application;
+use super::events::Event;
+
 pub struct Window {
     screen_width: i32,
     screen_height: i32,
@@ -38,33 +40,43 @@ extern "system" fn wnd_process(
             SetWindowLongPtrW(window, GWLP_USERDATA, transmute(app_ptr));
         }
     }
-    {
-        if app_ptr == null_mut() {
-            eprintln!(
-                "Unexpected message for nullptr sys app uMsg is: {}",
-                message
-            );
-            return unsafe { DefWindowProcW(window, message, param1, param2) };
-        }
+    if app_ptr == null_mut() {
+        eprintln!(
+            "Unexpected message for nullptr sys app uMsg is: {}",
+            message
+        );
+        return unsafe { DefWindowProcW(window, message, param1, param2) };
     }
     let app: &mut Application = unsafe { transmute(app_ptr) };
-    if message == WM_KEYDOWN {
-        if param1 == VK_ESCAPE as WPARAM {
-            app.is_running = false;
+    match message {
+        WM_QUIT => {
             unsafe {
                 DestroyWindow(window);
                 PostQuitMessage(0);
             }
+            app.handle(Event::Quit);
+        }
+        WM_KEYDOWN => {
+            if param1 == VK_ESCAPE as WPARAM {
+                unsafe {
+                    DestroyWindow(window);
+                    PostQuitMessage(0);
+                }
+                app.handle(Event::Quit);
+            }
+        }
+        WM_SHOWWINDOW => {
+            println!("windows shown");
+        }
+        _ => {
+            eprintln!("Unhandled window message");
         }
     }
     return unsafe { DefWindowProcW(window, message, param1, param2) };
-    // let result = app.window.
-    // return app.handle(window, message, param1, param2);
 }
 
 impl Window {
-    pub fn new(app: &mut Application) {
-        let appptr: *mut Application = unsafe { transmute(app) };
+    pub fn new(appptr: *mut Application) {
         let app: &mut Application = unsafe { transmute(appptr) };
         let mut wc: WNDCLASSEXW = unsafe { zeroed() };
         let application_name: Vec<u16> = OsStr::new("Dariush")
@@ -115,12 +127,16 @@ impl Window {
             SetFocus(app.window.window);
             UpdateWindow(app.window.window);
         }
-        while app.is_running {
-            let mut msg: MSG = unsafe { zeroed() };
-            unsafe {
-                GetMessageW(&mut msg, null_mut(), 0, 0);
-                TranslateMessage(&msg);
-                DispatchMessageW(&msg);
+    }
+
+    pub fn main_loop(&mut self) {
+        let mut msg: MSG = unsafe { zeroed() };
+        loop {
+            while unsafe { PeekMessageW(&mut msg, null_mut(), 0, 0, PM_REMOVE) } != 0 {
+                unsafe {
+                    TranslateMessage(&msg);
+                    DispatchMessageW(&msg);
+                }
             }
         }
     }

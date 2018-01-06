@@ -1,6 +1,7 @@
 extern crate winapi;
 
 pub mod application;
+pub mod events;
 pub mod window;
 
 fn main() {
