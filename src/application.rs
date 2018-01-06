@@ -3,9 +3,11 @@ use super::events::Event;
 use std::mem::zeroed;
 use std::process::exit;
 use std::sync::Mutex;
+use super::render_engine::RenderEngine;
 
 pub struct Application {
     pub window: Window,
+    pub render_engine: RenderEngine,
     event_handler_locker: Mutex<()>,
 }
 
@@ -13,6 +15,7 @@ impl Application {
     pub fn new() -> Self {
         let mut app = Application {
             window: unsafe { zeroed() },
+            render_engine: unsafe { zeroed() },
             event_handler_locker: Mutex::new(()),
         };
         Window::new(&mut app);
