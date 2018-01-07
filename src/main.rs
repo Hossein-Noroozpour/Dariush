@@ -1,5 +1,6 @@
 extern crate winapi;
-
+#[macro_use]
+pub mod macros;
 pub mod application;
 pub mod events;
 pub mod render_engine;

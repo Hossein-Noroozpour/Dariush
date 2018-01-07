@@ -15,7 +15,7 @@ impl Application {
     pub fn new() -> Self {
         let mut app = Application {
             window: unsafe { zeroed() },
-            render_engine: unsafe { zeroed() },
+            render_engine: RenderEngine::new(),
             event_handler_locker: Mutex::new(()),
         };
         Window::new(&mut app);
