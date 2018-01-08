@@ -8,11 +8,15 @@ authors = ["Hossein Noroozpour <hossein.noroozpour@gmail.com>"]
 [dependencies.winapi] 
 version = "*" 
 features = [
-    "winuser", 
-    "wingdi", 
+    "d3d11",
+    "d3dcommon",
+    "dxgi",
+    "dxgiformat",
+    "dxgitype",
     "libloaderapi", 
     "minwindef", 
     "windef", 
-    "dxgi",
-    "d3d11"
+    "winerror",
+    "wingdi", 
+    "winuser", 
 ]

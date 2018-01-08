@@ -19,10 +19,10 @@ use super::application::Application;
 use super::events::Event;
 
 pub struct Window {
-    screen_width: i32,
-    screen_height: i32,
-    instance: HINSTANCE,
-    window: HWND,
+    pub screen_width: i32,
+    pub screen_height: i32,
+    pub instance: HINSTANCE,
+    pub window: HWND,
 }
 
 extern "system" fn wnd_process(

@@ -33,6 +33,7 @@ impl Application {
         }
         let _guard = self.event_handler_locker.lock().unwrap();
         match e {
+            Event::WindowShowedUp => self.render_engine.initialize(&self.window),
             _ => {
                 eprintln!("Unhandled app event.");
             }
